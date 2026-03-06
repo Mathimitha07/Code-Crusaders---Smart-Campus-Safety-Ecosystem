@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-2xl font-semibold">Scan Attendance QR</h1>
+<p class="text-slate-600 mt-1">Use the back camera to scan the teacher QR.</p>
+
+<div class="mt-6 rounded-2xl border p-5 bg-white">
+  <div id="qr-reader" class="rounded-xl border bg-slate-50 p-3"></div>
+
+  <div class="mt-3 text-xs text-slate-500">
+    Tip: Allow camera permission when prompted.
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+(async () => {
+  const reader = document.getElementById("qr-reader");
+
+  try {
+    const devices = await Html5Qrcode.getCameras();
+    if (!devices || devices.length === 0) {
+      throw new Error("No camera detected");
+    }
+
+    let backCam = devices.find(d => /back|rear|environment/i.test(d.label));
+    if (!backCam) backCam = devices[devices.length - 1];
+
+    const scanner = new Html5Qrcode("qr-reader");
+
+    await scanner.start(
+      { deviceId: { exact: backCam.id } },
+      { fps: 10, qrbox: 250, rememberLastUsedCamera: true },
+      (decodedText) => {
+        scanner.stop().catch(() => {});
+        window.location.href = decodedText;
+      },
+      () => {}
+    );
+
+  } catch (err) {
+    reader.innerHTML = `
+      <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">
+        Camera error: ${err.message}
+      </div>
+    `;
+  }
+})();
+</script>
+{% endblock %}

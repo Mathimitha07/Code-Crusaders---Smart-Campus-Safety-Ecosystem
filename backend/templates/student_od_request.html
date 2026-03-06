@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold">OD Request</h1>
+    <p class="text-slate-600 mt-1">
+      Submit On-Duty request before attendance marking.
+    </p>
+  </div>
+</div>
+
+
+<div class="grid lg:grid-cols-2 gap-6 mt-6">
+
+  <!-- LEFT SIDE : OD REQUEST FORM -->
+  <div class="rounded-2xl border p-6">
+    <h2 class="font-semibold mb-3">New OD Request</h2>
+
+    <form
+      class="grid gap-4"
+      method="post"
+      action="/student/od/request"
+      enctype="multipart/form-data"
+    >
+
+      <div>
+        <label class="text-sm font-medium">College Name</label>
+        <input
+          type="text"
+          name="college_name"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          placeholder="Eg: PSG Tech"
+          required
+        >
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Event Type</label>
+        <select
+          name="event_type"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          required
+        >
+          <option value="">Select</option>
+          <option value="Intercollege">Intercollege</option>
+          <option value="Intracollege">Intracollege</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Event Name</label>
+        <input
+          type="text"
+          name="event_name"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          placeholder="Eg: Hackathon / Symposium / Workshop"
+          required
+        >
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">OD Date</label>
+        <input
+          type="date"
+          name="event_date"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          required
+        >
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Parent Consent Letter</label>
+        <input
+          type="file"
+          name="parent_letter"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          required
+        >
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">College OD Letter</label>
+        <input
+          type="file"
+          name="clg_od_letter"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          required
+        >
+      </div>
+
+      <button
+        type="submit"
+        class="btnPrimary mt-2"
+      >
+        Submit OD Request
+      </button>
+
+    </form>
+  </div>
+
+
+  <!-- RIGHT SIDE : EXISTING REQUESTS -->
+  <div class="rounded-2xl border p-6">
+
+    <h2 class="font-semibold mb-3">My OD Requests</h2>
+
+    <div class="rounded-2xl border overflow-hidden">
+
+      <table class="w-full text-sm">
+
+        <thead class="bg-slate-50 text-slate-600">
+          <tr>
+            <th class="p-3 text-left">Event</th>
+            <th class="p-3 text-left">Date</th>
+            <th class="p-3 text-left">Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {% if od_requests and od_requests|length > 0 %}
+
+            {% for r in od_requests %}
+            <tr class="border-t">
+
+              <td class="p-3">
+                <div class="font-medium">{{ r.event_name }}</div>
+                <div class="text-slate-500 text-xs">
+                  {{ r.college_name }} • {{ r.event_type }}
+                </div>
+              </td>
+
+              <td class="p-3 text-slate-600">
+                {{ r.event_date }}
+              </td>
+
+              <td class="p-3">
+
+                {% if r.status == 'APPROVED' %}
+                  <span class="badge bg-blue-50 text-blue-700 border border-blue-200">
+                    APPROVED
+                  </span>
+
+                {% elif r.status == 'REJECTED' %}
+                  <span class="badge badgeRed">
+                    REJECTED
+                  </span>
+
+                {% else %}
+                  <span class="badge bg-yellow-50 text-yellow-700 border border-yellow-200">
+                    PENDING
+                  </span>
+                {% endif %}
+
+              </td>
+
+            </tr>
+            {% endfor %}
+
+          {% else %}
+
+            <tr class="border-t">
+              <td colspan="3" class="p-4 text-slate-500 text-center">
+                No OD requests yet.
+              </td>
+            </tr>
+
+          {% endif %}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

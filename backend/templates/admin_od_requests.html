@@ -1,0 +1,194 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h1 class="text-2xl font-semibold">OD Requests</h1>
+<p class="text-slate-600 mt-1">
+  Approve or reject student OD requests.
+</p>
+
+
+<div class="mt-6 rounded-2xl border overflow-hidden">
+
+  <div class="overflow-x-auto">
+
+    <table class="w-full text-sm">
+
+      <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="p-3 text-left">Student</th>
+          <th class="p-3 text-left">College</th>
+          <th class="p-3 text-left">Event</th>
+          <th class="p-3 text-left">Date</th>
+          <th class="p-3 text-left">Parent Letter</th>
+          <th class="p-3 text-left">College Letter</th>
+          <th class="p-3 text-left">Status</th>
+          <th class="p-3 text-left">Action</th>
+        </tr>
+      </thead>
+
+
+      <tbody>
+
+        {% if od_requests and od_requests|length > 0 %}
+
+          {% for r in od_requests %}
+
+          <tr class="border-t align-top">
+
+            <!-- Student -->
+            <td class="p-3">
+              <div class="font-medium">
+                {{ r.student_name }}
+              </div>
+              <div class="text-slate-500 text-xs">
+                {{ r.student_username }}
+              </div>
+            </td>
+
+
+            <!-- College -->
+            <td class="p-3">
+              {{ r.college_name }}
+            </td>
+
+
+            <!-- Event -->
+            <td class="p-3">
+              <div class="font-medium">
+                {{ r.event_name }}
+              </div>
+              <div class="text-slate-500 text-xs">
+                {{ r.event_type }}
+              </div>
+            </td>
+
+
+            <!-- Date -->
+            <td class="p-3 text-slate-600">
+              {{ r.event_date }}
+            </td>
+
+
+            <!-- Parent Letter -->
+            <td class="p-3">
+
+              {% if r.parent_letter_path %}
+                <a
+                  href="{{ r.parent_letter_path }}"
+                  target="_blank"
+                  class="text-slate-900 underline"
+                >
+                  View
+                </a>
+              {% else %}
+                <span class="text-slate-400 text-xs">—</span>
+              {% endif %}
+
+            </td>
+
+
+            <!-- College Letter -->
+            <td class="p-3">
+
+              {% if r.clg_od_letter_path %}
+                <a
+                  href="{{ r.clg_od_letter_path }}"
+                  target="_blank"
+                  class="text-slate-900 underline"
+                >
+                  View
+                </a>
+              {% else %}
+                <span class="text-slate-400 text-xs">—</span>
+              {% endif %}
+
+            </td>
+
+
+            <!-- Status -->
+            <td class="p-3">
+
+              {% if r.status == "APPROVED" %}
+
+                <span class="badge bg-blue-50 text-blue-700 border border-blue-200">
+                  APPROVED
+                </span>
+
+              {% elif r.status == "REJECTED" %}
+
+                <span class="badge badgeRed">
+                  REJECTED
+                </span>
+
+              {% else %}
+
+                <span class="badge bg-yellow-50 text-yellow-700 border border-yellow-200">
+                  PENDING
+                </span>
+
+              {% endif %}
+
+            </td>
+
+
+            <!-- Action -->
+            <td class="p-3">
+
+              {% if r.status == "PENDING" %}
+
+                <div class="flex gap-2">
+
+                  <form method="post" action="/admin/od/{{ r.id }}/approve">
+                    <button
+                      type="submit"
+                      class="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs"
+                    >
+                      Approve
+                    </button>
+                  </form>
+
+                  <form method="post" action="/admin/od/{{ r.id }}/reject">
+                    <button
+                      type="submit"
+                      class="px-3 py-2 rounded-xl border text-xs"
+                    >
+                      Reject
+                    </button>
+                  </form>
+
+                </div>
+
+              {% else %}
+
+                <span class="text-slate-400 text-xs">
+                  Reviewed
+                </span>
+
+              {% endif %}
+
+            </td>
+
+          </tr>
+
+          {% endfor %}
+
+        {% else %}
+
+          <tr class="border-t">
+            <td colspan="8" class="p-4 text-slate-500 text-center">
+              No OD requests yet.
+            </td>
+          </tr>
+
+        {% endif %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+{% endblock %}

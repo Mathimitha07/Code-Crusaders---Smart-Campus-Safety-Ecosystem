@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-2xl font-semibold">Session Attendance</h1>
+<p class="text-slate-600 mt-1"><b>{{ sess.class_name }}</b> — {{ sess.created_iso }}</p>
+
+<div class="grid lg:grid-cols-3 gap-6 mt-6">
+  <div class="rounded-2xl border p-6">
+    <h2 class="font-semibold">Manual Attendance</h2>
+    <p class="text-sm text-slate-600 mt-1">Use this if QR scan fails or admin needs to correct attendance.</p>
+
+    <form method="post" action="/admin/attendance/session/{{ sess.id }}/manual-mark" class="mt-4 grid gap-3">
+      <div>
+        <label class="text-sm font-medium">Student Username</label>
+        <input
+          type="text"
+          name="student_username"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          placeholder="Eg: student1"
+          required
+        >
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Student Name</label>
+        <input
+          type="text"
+          name="student_name"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          placeholder="Eg: Swathi Krishna"
+          required
+        >
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Status</label>
+        <select name="status" class="mt-1 w-full rounded-2xl border px-3 py-2" required>
+          <option value="PRESENT">PRESENT</option>
+          <option value="ABSENT">ABSENT</option>
+          <option value="OD">OD</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Reason</label>
+        <input
+          type="text"
+          name="reason"
+          class="mt-1 w-full rounded-2xl border px-3 py-2"
+          placeholder="Eg: Manual correction by staff"
+          value="Manually marked by admin"
+        >
+      </div>
+
+      <button type="submit" class="btnPrimary">Save Manual Attendance</button>
+    </form>
+  </div>
+
+  <div class="lg:col-span-2">
+    <div class="rounded-2xl border overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr>
+            <th class="p-3 text-left">Student Name</th>
+            <th class="p-3 text-left">Username</th>
+            <th class="p-3 text-left">Status</th>
+            <th class="p-3 text-left">Reason</th>
+            <th class="p-3 text-left">Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in marks %}
+          <tr class="border-t">
+            <td class="p-3">{{ m.student_name }}</td>
+            <td class="p-3 text-slate-600">{{ m.student_username }}</td>
+            <td class="p-3">
+              {% if m.status == 'PRESENT' %}
+                <span class="badge badgeGreen">PRESENT</span>
+              {% elif m.status == 'OD' %}
+                <span class="badge bg-blue-50 text-blue-700 border border-blue-200">OD</span>
+              {% else %}
+                <span class="badge badgeRed">{{ m.status }}</span>
+              {% endif %}
+            </td>
+            <td class="p-3 text-slate-600">{{ m.reason }}</td>
+            <td class="p-3 text-slate-500">{{ m.marked_iso }}</td>
+          </tr>
+          {% endfor %}
+
+          {% if marks|length == 0 %}
+          <tr class="border-t">
+            <td class="p-4 text-slate-500" colspan="5">No attendance records yet.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex gap-2">
+      <a class="btnPrimary" href="/admin/attendance/export/{{ sess.id }}">Export CSV</a>
+      <a class="px-4 py-2.5 rounded-xl border hover:bg-slate-50" href="/admin/attendance/sessions">Back</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

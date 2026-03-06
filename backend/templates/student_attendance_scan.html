@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-2xl font-semibold">Scan QR</h1>
+<p class="text-slate-600 mt-1">Allow camera access. Scanning opens the real route automatically.</p>
+
+<div class="grid md:grid-cols-2 gap-6 mt-6">
+  <div class="rounded-2xl border p-4">
+    <div id="qr-reader" class="w-full"></div>
+    <p class="text-xs text-slate-500 mt-3">If camera doesn’t show, try Chrome and allow permissions.</p>
+  </div>
+
+  <div class="rounded-2xl border p-4">
+    <h2 class="font-semibold">What happens after scan?</h2>
+    <ul class="mt-2 text-sm text-slate-600 list-disc pl-5 space-y-1">
+      <li>QR contains sessionId + token</li>
+      <li>It opens <code>/student/attendance/qr</code></li>
+      <li>That page checks your location + time window + QR age</li>
+    </ul>
+
+    <div class="mt-4 p-3 rounded-xl bg-slate-50 border text-sm">
+      Tip: For demo, you can also paste a QR URL directly in browser.
+    </div>
+  </div>
+</div>
+
+<!-- QR scanner library -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  // Expect QR to contain a URL like /student/attendance/qr?sessionId=...&token=...
+  const reader = new Html5Qrcode("qr-reader");
+  const config = { fps: 10, qrbox: 250 };
+
+  Html5Qrcode.getCameras().then(devices => {
+    if (!devices || devices.length === 0) {
+      alert("No camera found.");
+      return;
+    }
+    const cameraId = devices[0].id;
+    reader.start(cameraId, config, (decodedText) => {
+      // If QR is full URL or relative, redirect
+      window.location.href = decodedText;
+    });
+  }).catch(err => {
+    console.error(err);
+    alert("Camera error. Check permissions.");
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/static/manifest.json">
+  <title>{{ title or "Smart Campus Hub" }}</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="stylesheet" href="/static/styles.css">
+
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen">
+    <header class="border-b bg-white sticky top-0 z-20">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="h-9 w-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-semibold">
+            SCH
+          </div>
+          <div>
+            <div class="font-semibold leading-tight">Smart Campus Hub</div>
+            <div class="text-xs text-slate-500">Minimal Stack MVP</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          {% if user %}
+            <span class="text-sm text-slate-600">Logged in as <b>{{ user.username }}</b> ({{ user.role }})</span>
+            <form method="post" action="/logout">
+              <button class="px-3 py-2 rounded-xl border hover:bg-slate-50 text-sm">Logout</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="border-t py-6 text-center text-xs text-slate-500">
+      Built with HTML + Tailwind + FastAPI + SQLite + PWA Offline
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+  <script src="/static/offline.js"></script>
+  <script src="/static/pwa.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

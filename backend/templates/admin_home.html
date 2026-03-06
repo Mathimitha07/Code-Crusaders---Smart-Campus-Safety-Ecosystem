@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-2xl font-semibold">Admin Dashboard</h1>
+<p class="text-slate-600 mt-1">Create attendance sessions + review OD + view safety reports.</p>
+
+<!-- Emergency Banner -->
+<div id="emergencyBanner" class="hidden mt-4 p-4 rounded-2xl border border-red-300 bg-red-50 text-red-800">
+  <div class="font-semibold text-lg">🚨 EMERGENCY ALERT</div>
+  <div id="emergencyBannerText" class="text-sm mt-1">A student has triggered an emergency alert.</div>
+</div>
+
+<div class="grid md:grid-cols-4 gap-4 mt-6">
+  <a href="/admin/attendance/sessions" class="card">
+    <div class="cardIcon"><i data-lucide="qr-code"></i></div>
+    <div>
+      <div class="cardTitle">Attendance Sessions</div>
+      <div class="cardDesc">Create QR + manage sessions</div>
+    </div>
+  </a>
+
+  <a href="/admin/od" class="card">
+    <div class="cardIcon"><i data-lucide="file-check"></i></div>
+    <div>
+      <div class="cardTitle">OD Requests</div>
+      <div class="cardDesc">Approve / reject OD</div>
+    </div>
+  </a>
+
+  <a href="/admin/reports" class="card">
+    <div class="cardIcon"><i data-lucide="shield-alert"></i></div>
+    <div>
+      <div class="cardTitle">Safety Reports</div>
+      <div class="cardDesc">View student incident reports</div>
+    </div>
+  </a>
+
+  <a href="/admin/emergency-locations" class="card">
+    <div class="cardIcon"><i data-lucide="map-pinned"></i></div>
+    <div>
+      <div class="cardTitle">Emergency Locations</div>
+      <div class="cardDesc">View captured coordinates</div>
+    </div>
+  </a>
+</div>
+
+<div class="grid md:grid-cols-3 gap-6 mt-8">
+  <div>
+    <h2 class="font-semibold">Recent Sessions</h2>
+    <div class="mt-3 rounded-2xl border overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr><th class="p-3 text-left">Class</th><th class="p-3 text-left">Created</th></tr>
+        </thead>
+        <tbody>
+          {% for s in sessions %}
+          <tr class="border-t">
+            <td class="p-3">{{ s.class_name }}</td>
+            <td class="p-3 text-slate-500">{{ s.created_iso }}</td>
+          </tr>
+          {% endfor %}
+          {% if sessions|length == 0 %}
+          <tr class="border-t"><td class="p-4 text-slate-500" colspan="2">No sessions yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <h2 class="font-semibold">Recent OD Requests</h2>
+    <div class="mt-3 rounded-2xl border overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr><th class="p-3 text-left">Student</th><th class="p-3 text-left">Status</th></tr>
+        </thead>
+        <tbody>
+          {% for r in od_requests %}
+          <tr class="border-t">
+            <td class="p-3">{{ r.student_name }}</td>
+            <td class="p-3 text-slate-500">{{ r.status }}</td>
+          </tr>
+          {% endfor %}
+          {% if od_requests|length == 0 %}
+          <tr class="border-t"><td class="p-4 text-slate-500" colspan="2">No OD requests yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <h2 class="font-semibold">Recent Reports</h2>
+    <div class="mt-3 rounded-2xl border overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr><th class="p-3 text-left">Title</th><th class="p-3 text-left">Student</th></tr>
+        </thead>
+        <tbody>
+          {% for r in reports %}
+          <tr class="border-t">
+            <td class="p-3">{{ r.title }}</td>
+            <td class="p-3 text-slate-500">{{ r.student_username }}</td>
+          </tr>
+          {% endfor %}
+          {% if reports|length == 0 %}
+          <tr class="border-t"><td class="p-4 text-slate-500" colspan="2">No reports yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<audio id="alarmSound" preload="auto">
+  <source src="/static/alarm.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+let lastEmergencyId = null;
+
+async function checkEmergency(initial = false) {
+  try {
+    const res = await fetch("/api/admin/check-emergency");
+    const data = await res.json();
+
+    if (!data.alerts || data.alerts.length === 0) return;
+
+    const latest = data.alerts[0];
+
+    if (initial) {
+      lastEmergencyId = latest.id;
+      return;
+    }
+
+    if (latest.id !== lastEmergencyId) {
+      lastEmergencyId = latest.id;
+
+      const banner = document.getElementById("emergencyBanner");
+      const bannerText = document.getElementById("emergencyBannerText");
+      banner.classList.remove("hidden");
+      bannerText.textContent = `Student ${latest.student_username} triggered an emergency alert at ${latest.created_iso}`;
+
+      const audio = document.getElementById("alarmSound");
+      audio.play().catch(() => {
+        console.log("Audio autoplay blocked until user interacts with page.");
+      });
+
+      alert("🚨 EMERGENCY ALERT FROM STUDENT!");
+    }
+  } catch (err) {
+    console.error("Emergency check failed:", err);
+  }
+}
+
+checkEmergency(true);
+setInterval(() => checkEmergency(false), 5000);
+</script>
+
+{% endblock %}

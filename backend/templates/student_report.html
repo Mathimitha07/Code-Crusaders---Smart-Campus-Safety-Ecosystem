@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-2xl font-semibold">Report Incident</h1>
+<p class="text-slate-600 mt-1">Submit now or store offline and auto-sync.</p>
+
+<div class="mt-6 rounded-2xl border p-6 max-w-2xl">
+  <div class="grid gap-4">
+    <div>
+      <label class="text-sm font-medium">Title</label>
+      <input id="title" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="Eg: Harassment near Gate 2">
+    </div>
+
+    <div>
+      <label class="text-sm font-medium">Details</label>
+      <textarea id="details" class="mt-1 w-full rounded-xl border px-3 py-2" rows="5" placeholder="Explain what happened..."></textarea>
+    </div>
+
+    <button class="btnPrimary" onclick="sendReport()">Submit Report</button>
+
+    <div id="msg" class="text-sm text-slate-600"></div>
+  </div>
+</div>
+
+<script>
+  async function sendReport() {
+    const title = document.getElementById("title").value.trim();
+    const details = document.getElementById("details").value.trim();
+    const msg = document.getElementById("msg");
+
+    if (!title || !details) {
+      msg.textContent = "Please fill title and details.";
+      return;
+    }
+
+    await window.SafeReports.submitReport({ title, details });
+    msg.textContent = navigator.onLine
+      ? "Submitted ✅"
+      : "Saved offline ✅ (will auto-sync when online)";
+    document.getElementById("title").value = "";
+    document.getElementById("details").value = "";
+  }
+</script>
+{% endblock %}

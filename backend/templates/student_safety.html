@@ -1,0 +1,200 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="text-2xl font-semibold">Campus Safety</h1>
+<p class="text-slate-600 mt-1">Report incidents or trigger emergency alert.</p>
+
+<div class="grid md:grid-cols-2 gap-6 mt-6">
+
+  <!-- Manual Report -->
+  <div class="rounded-2xl border p-6">
+    <h2 class="font-semibold">Report Incident</h2>
+
+    <form id="reportForm" class="mt-4 grid gap-3">
+      <input
+        name="title"
+        placeholder="Incident title"
+        class="rounded-xl border px-3 py-2"
+        required
+      >
+
+      <textarea
+        name="details"
+        placeholder="Describe what happened"
+        class="rounded-xl border px-3 py-2"
+        required
+      ></textarea>
+
+      <button class="btnPrimary" type="submit">
+        Submit Report
+      </button>
+    </form>
+
+    <div id="reportMsg" class="text-sm mt-2"></div>
+  </div>
+
+
+  <!-- Voice Emergency -->
+  <div class="rounded-2xl border p-6">
+    <h2 class="font-semibold">🚨 Voice Emergency Alert</h2>
+
+    <p class="text-sm text-slate-600 mt-1">
+      Say <b>"HELP"</b>, <b>"EMERGENCY"</b> or <b>"SAVE ME"</b> to send alert.
+    </p>
+
+    <div class="mt-4 flex gap-3">
+      <button
+        id="voiceBtn"
+        type="button"
+        class="px-4 py-3 rounded-xl bg-red-600 text-white"
+      >
+        🎤 Start Voice Detection
+      </button>
+
+      <button
+        id="stopVoiceBtn"
+        type="button"
+        class="px-4 py-3 rounded-xl border"
+      >
+        Stop
+      </button>
+    </div>
+
+    <div id="voiceStatus" class="mt-3 text-sm text-slate-600">
+      Voice system idle
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+const voiceBtn = document.getElementById("voiceBtn");
+const stopVoiceBtn = document.getElementById("stopVoiceBtn");
+const voiceStatus = document.getElementById("voiceStatus");
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let recognition = null;
+let emergencySent = false;
+
+if (!SpeechRecognition) {
+  voiceStatus.innerText = "Voice recognition not supported in this browser";
+} else {
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.continuous = true;
+  recognition.interimResults = false;
+
+  voiceBtn.onclick = () => {
+    emergencySent = false;
+    try {
+      recognition.start();
+      voiceStatus.innerText = "Listening for HELP / EMERGENCY / SAVE ME...";
+    } catch (err) {
+      voiceStatus.innerText = "Could not start voice detection. Try again.";
+    }
+  };
+
+  stopVoiceBtn.onclick = () => {
+    try {
+      recognition.stop();
+      voiceStatus.innerText = "Voice detection stopped";
+    } catch (err) {
+      voiceStatus.innerText = "Voice detection already stopped";
+    }
+  };
+
+  recognition.onresult = async (event) => {
+    const speech = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+    voiceStatus.innerText = "Heard: " + speech;
+
+    if (
+      !emergencySent &&
+      (
+        speech.includes("help") ||
+        speech.includes("emergency") ||
+        speech.includes("save me")
+      )
+    ) {
+      emergencySent = true;
+      voiceStatus.innerText = "🚨 Emergency detected! Getting location...";
+
+      if (!navigator.geolocation) {
+        voiceStatus.innerText = "Location is not supported on this device/browser";
+        emergencySent = false;
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const res = await fetch("/api/student/emergency", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude
+              })
+            });
+
+            if (!res.ok) {
+              throw new Error("Failed to send emergency alert");
+            }
+
+            voiceStatus.innerText = "🚨 Emergency alert sent to admin!";
+            try { recognition.stop(); } catch (e) {}
+          } catch (err) {
+            voiceStatus.innerText = "Failed to send emergency alert";
+            emergencySent = false;
+          }
+        },
+        (err) => {
+          voiceStatus.innerText = "Location permission denied or unavailable";
+          emergencySent = false;
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
+  };
+
+  recognition.onerror = (event) => {
+    voiceStatus.innerText = "Voice error: " + event.error;
+    emergencySent = false;
+  };
+
+  recognition.onend = () => {
+    if (!emergencySent) {
+      voiceStatus.innerText = "Voice detection stopped";
+    }
+  };
+}
+
+
+document.getElementById("reportForm").onsubmit = async (e) => {
+  e.preventDefault();
+
+  const fd = new FormData(e.target);
+
+  const body = {
+    title: fd.get("title"),
+    details: fd.get("details")
+  };
+
+  const res = await fetch("/api/student/report", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  document.getElementById("reportMsg").innerText =
+    res.ok ? "Report submitted" : "Failed to submit report";
+};
+</script>
+
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="flex items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold">Attendance</h1>
+    <p class="text-slate-600 mt-1">
+      Scan QR to mark attendance. If you have approved OD, it will be marked automatically.
+    </p>
+  </div>
+
+  <!-- QR Scanner Button -->
+  <a href="/student/attendance/scan" class="btnPrimary flex items-center gap-2">
+    <i data-lucide="camera" class="h-4 w-4"></i>
+    <span>Scan QR</span>
+  </a>
+</div>
+
+
+<!-- HTTPS Warning -->
+<div class="mt-4 p-4 rounded-2xl border bg-amber-50 text-amber-900 text-sm">
+  <div class="font-semibold">⚠️ Important for Mobile</div>
+  <div class="mt-1">
+    Camera and location permissions only work on <b>HTTPS</b>.
+  </div>
+
+  <div class="mt-2">
+    If you open this page using:
+    <code class="px-1 py-0.5 rounded bg-white border">http://192.168.x.x:8000</code>
+    mobile browsers may block camera or GPS.
+  </div>
+
+  <div class="mt-2">
+    ✅ For demo, open using your <b>ngrok HTTPS link</b>
+    <br>
+    Example:
+    <code class="px-1 py-0.5 rounded bg-white border">
+      https://xxxx.ngrok-free.app
+    </code>
+  </div>
+</div>
+
+
+<!-- How Attendance Works -->
+<div class="mt-4 p-4 rounded-2xl border bg-slate-50 text-sm text-slate-700">
+  <div class="font-semibold">How Attendance Works</div>
+
+  <ul class="mt-2 list-disc pl-5 space-y-1">
+    <li>Tap <b>Scan QR</b></li>
+    <li>Back camera opens</li>
+    <li>Scan teacher QR code</li>
+    <li>System validates:
+      <ul class="list-disc pl-5">
+        <li>QR Token</li>
+        <li>Time Window</li>
+        <li>Geofence</li>
+      </ul>
+    </li>
+    <li>If approved OD exists → attendance becomes <b>OD</b></li>
+  </ul>
+</div>
+
+
+<!-- Attendance History -->
+<div class="mt-6 rounded-2xl border overflow-hidden">
+  <table class="w-full text-sm">
+
+    <thead class="bg-slate-50 text-slate-600">
+      <tr>
+        <th class="p-3 text-left">Class</th>
+        <th class="p-3 text-left">Status</th>
+        <th class="p-3 text-left">Reason</th>
+        <th class="p-3 text-left">Time</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      {% for m in marks %}
+      <tr class="border-t">
+
+        <!-- Class -->
+        <td class="p-3">
+          {{ m.class_name }}
+        </td>
+
+        <!-- Status -->
+        <td class="p-3">
+
+          {% if m.status == "PRESENT" %}
+          <span class="badge badgeGreen">
+            PRESENT
+          </span>
+
+          {% elif m.status == "OD" %}
+          <span class="badge bg-blue-50 text-blue-700 border border-blue-200">
+            OD
+          </span>
+
+          {% elif m.status == "ABSENT" %}
+          <span class="badge badgeRed">
+            ABSENT
+          </span>
+
+          {% else %}
+          <span class="badge">
+            {{ m.status }}
+          </span>
+          {% endif %}
+
+        </td>
+
+        <!-- Reason -->
+        <td class="p-3 text-slate-600">
+          {{ m.reason }}
+        </td>
+
+        <!-- Time -->
+        <td class="p-3 text-slate-500">
+          {{ m.marked_iso }}
+        </td>
+
+      </tr>
+      {% endfor %}
+
+
+      {% if marks|length == 0 %}
+      <tr class="border-t">
+        <td class="p-4 text-slate-500" colspan="4">
+          No attendance records yet.
+        </td>
+      </tr>
+      {% endif %}
+
+    </tbody>
+  </table>
+</div>
+
+
+<script>
+  lucide.createIcons();
+</script>
+
+{% endblock %}

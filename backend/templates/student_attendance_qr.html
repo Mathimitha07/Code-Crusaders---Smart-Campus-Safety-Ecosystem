@@ -1,0 +1,201 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-2xl font-semibold">QR Validation</h1>
+<p class="text-slate-600 mt-1">Checking token + time window + geofence…</p>
+
+<div class="mt-6 rounded-2xl border p-5">
+  <div id="statusBox" class="p-4 rounded-xl bg-slate-50 border text-sm text-slate-700">
+    Preparing…
+  </div>
+
+  <!-- Optional: Manual fallback (helps in demos if GPS is blocked) -->
+  <div id="manualBox" class="hidden mt-4 p-4 rounded-xl border bg-white">
+    <div class="font-semibold text-sm text-slate-900">Manual location (demo fallback)</div>
+    <p class="text-xs text-slate-600 mt-1">
+      If GPS is blocked on your phone (HTTP), you can enter coordinates manually for demo.
+      For real use, open the app via HTTPS (ngrok) so GPS works.
+    </p>
+
+    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="text-xs text-slate-600">Latitude</label>
+        <input id="latInput" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="e.g. 11.0791" />
+      </div>
+      <div>
+        <label class="text-xs text-slate-600">Longitude</label>
+        <input id="lngInput" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="e.g. 77.0017" />
+      </div>
+    </div>
+
+    <div class="mt-3 flex gap-2">
+      <button id="manualSubmit" class="btnPrimary">Validate with manual location</button>
+      <button id="hideManual" class="px-4 py-2.5 rounded-xl border hover:bg-slate-50 text-sm">Hide</button>
+    </div>
+  </div>
+
+  <div class="mt-4 flex flex-wrap gap-2">
+    <button id="retryBtn" class="px-4 py-2.5 rounded-xl border hover:bg-slate-50 text-sm">
+      Retry
+    </button>
+    <button id="manualBtn" class="px-4 py-2.5 rounded-xl border hover:bg-slate-50 text-sm">
+      Enter location manually
+    </button>
+  </div>
+
+  <div class="mt-3 text-xs text-slate-500">
+    Tip: On mobile, location works only on <b>HTTPS</b>. For testing use your <b>ngrok https</b> URL.
+  </div>
+</div>
+
+<script>
+  const sessionId = "{{ sessionId }}";
+  const token = "{{ token }}";
+
+  const box = document.getElementById("statusBox");
+  const retryBtn = document.getElementById("retryBtn");
+  const manualBtn = document.getElementById("manualBtn");
+  const manualBox = document.getElementById("manualBox");
+  const manualSubmit = document.getElementById("manualSubmit");
+  const hideManual = document.getElementById("hideManual");
+
+  const latInput = document.getElementById("latInput");
+  const lngInput = document.getElementById("lngInput");
+
+  function setBoxInfo(msg) {
+    box.className = "p-4 rounded-xl bg-slate-50 border text-sm text-slate-700";
+    box.textContent = msg;
+  }
+
+  function setBoxError(msg) {
+    box.className = "p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-800";
+    box.innerHTML = msg;
+  }
+
+  function setBoxResult(data) {
+    const ok = data.status === "PRESENT";
+    box.className =
+      "p-4 rounded-xl border text-sm " +
+      (ok
+        ? "bg-green-50 border-green-200 text-green-800"
+        : "bg-red-50 border-red-200 text-red-800");
+
+    box.innerHTML = `
+      <div class="font-semibold text-base">${ok ? "✅ Marked PRESENT" : "❌ Marked ABSENT"}</div>
+      <div class="mt-1">Class: <b>${data.class_name}</b></div>
+      <div class="mt-1">Reason: ${data.reason}</div>
+      <div class="mt-2 text-xs opacity-80">SessionId: ${sessionId}</div>
+    `;
+  }
+
+  async function getLocation() {
+    // Important: Some browsers block geolocation on non-HTTPS origins (except localhost).
+    if (!navigator.geolocation) {
+      throw new Error("Geolocation not supported on this device/browser.");
+    }
+
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (err) => reject(err),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+    });
+  }
+
+  async function validate(lat, lng) {
+    const res = await fetch("/api/student/validate-qr", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, token, lat, lng })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Validation failed");
+    return data;
+  }
+
+  function isLikelyInsecureOriginError(err) {
+    const msg = (err && (err.message || err.toString())) || "";
+    return /Only secure origins are allowed/i.test(msg);
+  }
+
+  async function runAuto() {
+    setBoxInfo("Getting location… (Please allow location permission)");
+    try {
+      const loc = await getLocation();
+      setBoxInfo("Validating with server…");
+      const data = await validate(loc.lat, loc.lng);
+      setBoxResult(data);
+    } catch (e) {
+      const msg = e?.message || String(e);
+
+      // Special case: mobile HTTP blocks GPS
+      if (isLikelyInsecureOriginError(e) || /secure origin|Only secure origins/i.test(msg)) {
+        setBoxError(`
+          <div class="font-semibold">Location blocked by browser ⚠️</div>
+          <div class="mt-1">
+            Mobile browsers allow GPS only on <b>HTTPS</b> sites (or localhost).<br/>
+            Fix: Open this app using your <b>ngrok https</b> URL and try again.
+          </div>
+          <div class="mt-2 text-xs opacity-80">Error: ${msg}</div>
+        `);
+        return;
+      }
+
+      // Permission denied
+      if (e?.code === 1) {
+        setBoxError(`
+          <div class="font-semibold">Location permission denied ❌</div>
+          <div class="mt-1">Enable location permission for Chrome and try again.</div>
+        `);
+        return;
+      }
+
+      // Timeout
+      if (e?.code === 3) {
+        setBoxError(`
+          <div class="font-semibold">Location timeout ⏱️</div>
+          <div class="mt-1">Move to open area / enable GPS and retry.</div>
+        `);
+        return;
+      }
+
+      setBoxError(`Error: ${msg}`);
+    }
+  }
+
+  retryBtn.addEventListener("click", () => runAuto());
+
+  manualBtn.addEventListener("click", () => {
+    manualBox.classList.remove("hidden");
+    // Prefill with your campus location (optional)
+    if (!latInput.value) latInput.value = "11.0791";
+    if (!lngInput.value) lngInput.value = "77.0017";
+  });
+
+  hideManual.addEventListener("click", () => {
+    manualBox.classList.add("hidden");
+  });
+
+  manualSubmit.addEventListener("click", async () => {
+    const lat = parseFloat(latInput.value);
+    const lng = parseFloat(lngInput.value);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      alert("Enter valid latitude & longitude");
+      return;
+    }
+
+    setBoxInfo("Validating with server…");
+    try {
+      const data = await validate(lat, lng);
+      setBoxResult(data);
+    } catch (e) {
+      setBoxError("Error: " + (e?.message || String(e)));
+    }
+  });
+
+  // Run automatically on load
+  runAuto();
+</script>
+{% endblock %}

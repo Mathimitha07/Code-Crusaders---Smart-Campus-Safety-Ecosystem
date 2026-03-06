@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="rounded-2xl border bg-white shadow-sm p-6">
+    <h1 class="text-xl font-semibold">Login</h1>
+    <p class="text-sm text-slate-600 mt-1">Use demo accounts: admin/12345, student1/12345</p>
+
+    {% if error %}
+      <div class="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="post" action="/login" class="mt-5 space-y-4">
+      <div>
+        <label class="text-sm font-medium">Role</label>
+        <select name="role" class="mt-1 w-full rounded-xl border px-3 py-2">
+          <option value="student">Student</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Username</label>
+        <input name="username" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="admin or student1"/>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium">Password</label>
+        <input type="password" name="password" class="mt-1 w-full rounded-xl border px-3 py-2" placeholder="12345"/>
+      </div>
+
+      <button class="w-full rounded-xl bg-slate-900 text-white py-2.5 hover:bg-slate-800">
+        Login
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

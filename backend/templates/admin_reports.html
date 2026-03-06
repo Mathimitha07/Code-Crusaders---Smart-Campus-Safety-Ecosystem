@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-2xl font-semibold">Safety Reports</h1>
+<p class="text-slate-600 mt-1">Includes offline-synced reports too.</p>
+
+<div class="mt-6 rounded-2xl border overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600">
+      <tr>
+        <th class="p-3 text-left">Title</th>
+        <th class="p-3 text-left">Student</th>
+        <th class="p-3 text-left">Location</th>
+        <th class="p-3 text-left">Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reports %}
+      <tr class="border-t align-top">
+        <td class="p-3">
+          <div class="font-medium">{{ r.title }}</div>
+          <div class="text-slate-600 mt-1">{{ r.details }}</div>
+        </td>
+        <td class="p-3 text-slate-700">{{ r.student_username }}</td>
+        <td class="p-3 text-slate-600">
+          {% if r.lat and r.lng %}
+            {{ r.lat }}, {{ r.lng }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td class="p-3 text-slate-500">{{ r.created_iso }}</td>
+      </tr>
+      {% endfor %}
+      {% if reports|length == 0 %}
+      <tr class="border-t"><td class="p-4 text-slate-500" colspan="4">No reports yet.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

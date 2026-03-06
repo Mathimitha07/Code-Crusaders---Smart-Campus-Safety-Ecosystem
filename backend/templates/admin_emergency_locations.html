@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="text-2xl font-semibold">Emergency Locations</h1>
+<p class="text-slate-600 mt-1">Automatic location captured from student emergency alerts.</p>
+
+<div class="mt-6 rounded-2xl border overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600">
+      <tr>
+        <th class="p-3 text-left">Student</th>
+        <th class="p-3 text-left">Alert</th>
+        <th class="p-3 text-left">Latitude</th>
+        <th class="p-3 text-left">Longitude</th>
+        <th class="p-3 text-left">Time</th>
+        <th class="p-3 text-left">Map</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for r in locations %}
+      <tr class="border-t">
+
+        <td class="p-3">
+          <div class="font-medium">{{ r.student_username }}</div>
+        </td>
+
+        <td class="p-3 text-red-600 font-semibold">
+          {{ r.title }}
+        </td>
+
+        <td class="p-3 text-slate-600">
+          {{ r.lat }}
+        </td>
+
+        <td class="p-3 text-slate-600">
+          {{ r.lng }}
+        </td>
+
+        <td class="p-3 text-slate-500">
+          {{ r.created_iso }}
+        </td>
+
+        <td class="p-3">
+          <a
+            href="https://www.google.com/maps?q={{ r.lat }},{{ r.lng }}"
+            target="_blank"
+            class="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs"
+          >
+            View Map
+          </a>
+        </td>
+
+      </tr>
+      {% endfor %}
+
+      {% if locations|length == 0 %}
+      <tr class="border-t">
+        <td class="p-4 text-slate-500" colspan="6">
+          No emergency locations captured yet.
+        </td>
+      </tr>
+      {% endif %}
+
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-4">
+  <a href="/admin" class="px-4 py-2.5 rounded-xl border hover:bg-slate-50">
+    Back to Dashboard
+  </a>
+</div>
+
+{% endblock %}
